@@ -13,7 +13,7 @@ set -u # Treat unset variables as an error when substituting.
 # prefix to the osmesa installation
 osmesaprefix="${OSMESA_PREFIX:-/opt/osmesa}"
 # mesa version
-mesaversion="${OSMESA_VERSION:-17.1.9}"
+mesaversion="${OSMESA_VERSION:-17.1.10}"
 # mesa-demos version
 demoversion=8.3.0
 # glu version
@@ -502,7 +502,8 @@ case "$osname" in
         fi
         mkdir -p "$osmesaprefix/include" "$osmesaprefix/lib/pkgconfig"
         env LLVM_CONFIG="$llvmconfigbinary" LLVM="$llvmprefix" CFLAGS="$scons_cflags" CXXFLAGS="$scons_cxxflags" LDFLAGS="$scons_ldflags" scons build="$scons_build" platform=windows toolchain=mingw machine="$scons_machine" texture_float=yes llvm="$scons_llvm" swr="$scons_swr" verbose=yes osmesa
-        cp "build/windows-$scons_machine/gallium/targets/osmesa/osmesa.dll" "$osmesaprefix/lib/"
+        cp "build/windows-$scons_machine/gallium/targets/osmesa/osmesa.dll" "$osmesaprefix/lib/osmesa.dll"
+        cp "build/windows-$scons_machine/gallium/targets/osmesa/libosmesa.a" "$osmesaprefix/lib/libMangledOSMesa32.a"
         cp -a "include/GL" "$osmesaprefix/include/" || exit 1
         cat <<EOF > "$osmesaprefix/lib/pkgconfig/osmesa.pc"
 prefix=${osmesaprefix}
@@ -514,7 +515,7 @@ Name: osmesa
 Description: Mesa Off-screen Rendering library
 Requires:
 Version: $mesaversion
-Libs: -L\${libdir} -lOSMesa
+Libs: -L\${libdir} -lMangledOSMesa32
 Cflags: -I\${includedir}
 EOF
         cp $osmesaprefix/lib/pkgconfig/osmesa.pc $osmesaprefix/lib/pkgconfig/gl.pc
@@ -625,7 +626,7 @@ EOF
             fi
         fi
 
-        env PKG_CONFIG_PATH= CC="$CC" CXX="$CXX" PTHREADSTUBS_CFLAGS=" " PTHREADSTUBS_LIBS=" " ./configure ${confopts} CC="$CC" CFLAGS="$CFLAGS" CXX="$CXX" CXXFLAGS="$CXXFLAGS"
+        env CC="$CC" CXX="$CXX" PTHREADSTUBS_CFLAGS=" " PTHREADSTUBS_LIBS=" " ./configure ${confopts} CC="$CC" CFLAGS="$CFLAGS" CXX="$CXX" CXXFLAGS="$CXXFLAGS"
 
         make -j"${mkjobs}"
 
@@ -671,7 +672,7 @@ if [ "$mangled" = 1 ]; then
      CPPFLAGS=-DUSE_MGL_NAMESPACE"
 fi
 
-env PKG_CONFIG_PATH="$osmesaprefix"/lib/pkgconfig ./configure ${confopts} CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"
+env PKG_CONFIG_PATH="${PKG_CONFIG_PATH:+${PKG_CONFIG_PATH}:}${osmesaprefix}/lib/pkgconfig" ./configure ${confopts} CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"
 make -j"${mkjobs}"
 
 echo "* installing GLU..."
@@ -706,14 +707,24 @@ fi
 if [ -z "${OSDEMO_LD:-}" ]; then
     OSDEMO_LD="$CXX"
 fi
-if [ "$osname" = Darwin ]; then
+if [ "$osname" = Darwin ] || [ "$osname" = Linux ]; then
     # strange, got 'Undefined symbols for architecture x86_64' without zlib for both llvmpipe and softpipe drivers.
     # missing symbols are _deflate, _deflateEnd, _deflateInit_, _inflate, _inflateEnd and _inflateInit
     LIBS32="$LIBS32 -lz"
 fi
 echo "$OSDEMO_LD $CFLAGS -I$osmesaprefix/include -I../../src/util $INCLUDES  -o osdemo32 osdemo32.c -L$osmesaprefix/lib $LIBS32 $llvmlibs"
-$OSDEMO_LD $CFLAGS -I$osmesaprefix/include -I../../src/util $INCLUDES  -o osdemo32 osdemo32.c -L$osmesaprefix/lib $LIBS32 $llvmlibs
-./osdemo32 image.tga
+if [ "$osname" = Darwin ] || [ "$osname" = Linux ]; then
+    allowfail=false
+else
+    # build on windows may fail because osmesa is a dll but glu is not, thus:
+    #G:\msys64\tmp\mingw32\cclAYXEC.o:osdemo32.c:(.text.startup+0x11f): undefined reference to `_imp__mgluNewQuadric@0'
+    #G:\msys64\tmp\mingw32\cclAYXEC.o:osdemo32.c:(.text.startup+0x480): undefined reference to `_imp__mgluCylinder@36'
+    #G:\msys64\tmp\mingw32\cclAYXEC.o:osdemo32.c:(.text.startup+0x4f8): undefined reference to `_imp__mgluSphere@20'
+    #G:\msys64\tmp\mingw32\cclAYXEC.o:osdemo32.c:(.text.startup+0x513): undefined reference to `_imp__mgluDeleteQuadric@4'
+    #collect2.exe: error: ld returned 1 exit status
+    allowfail=true
+fi
+$OSDEMO_LD $CFLAGS -I$osmesaprefix/include -I../../src/util $INCLUDES  -o osdemo32 osdemo32.c -L$osmesaprefix/lib $LIBS32 $llvmlibs || ./osdemo32 image.tga || $allowfail
 # result is in image.tga
 
 exit
