@@ -13,13 +13,13 @@ set -u # Treat unset variables as an error when substituting.
 # prefix to the osmesa installation
 osmesaprefix="${OSMESA_PREFIX:-/opt/osmesa}"
 # mesa version
-mesaversion="${OSMESA_VERSION:-17.1.10}"
+mesaversion="${OSMESA_VERSION:-18.1.7}"
 # mesa-demos version
 demoversion=8.3.0
 # glu version
 gluversion=9.0.0
 # set debug to 1 to compile a version with debugging symbols
-debug=0
+debug="${OSMESA_DEBUG:-0}"
 # set clean to 1 to clean the source directories first (recommended)
 clean=1
 # number of parallel make jobs, set to 4 by default
@@ -103,12 +103,12 @@ if [ "$osname" = Darwin ]; then
     # Similarly, the SDK root can be set using the SDKROOT environment variable, as in
     # "env MACOSX_DEPLOYMENT_TARGET=10.8 SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk ../osmesa-install.sh"
 
-    if [ "$osmesadriver" = 4 ]; then
+#   if [ "$osmesadriver" = 4 ]; then
         #     "swr" (aka OpenSWR) is not supported on macOS,
         #     https://github.com/OpenSWR/openswr/issues/2
         #     https://github.com/OpenSWR/openswr-mesa/issues/11
-        osmesadriver=3
-    fi
+#    osmesadriver=3
+#   fi
     if [ "$osver" = 10 ]; then
         # On Snow Leopard, if using the system's gcci with libstdc++, build with llvm 3.4.2.
         # If using libc++ (see https://trac.macports.org/wiki/LibcxxOnOlderSystems), compile
@@ -415,7 +415,9 @@ osmesa-configure-ac.patch \
 if [ "$osname" = Darwin ] && [ "$osver" -lt 14 ]; then
     # See https://trac.macports.org/ticket/54638
     # See https://trac.macports.org/ticket/54643
-    PATCHES="$PATCHES disable_shader_cache.patch"
+    PATCHES="$PATCHES \
+    disable_shader_cache.patch \
+    "
 fi
 
 #if mangled, add mgl_export (for mingw)
@@ -440,6 +442,7 @@ if [ "$osname" = Darwin ]; then
     no-missing-prototypes-error.patch \
     o-cloexec.patch \
     patch-include-GL-mesa_glinterop_h.diff \
+    patch-builder_misc_fix_compilation.diff \
     "
 fi
 
@@ -538,8 +541,8 @@ EOF
 
         confopts="\
             --disable-dependency-tracking \
-            --enable-static \
-            --disable-shared \
+            --disable-static \
+            --enable-shared \
             --enable-texture-float \
             --disable-gles1 \
             --disable-gles2 \
@@ -551,7 +554,6 @@ EOF
             --disable-gbm \
             --disable-xvmc \
             --disable-vdpau \
-            --disable-omx \
             --disable-va \
             --disable-opencl \
             --disable-shared-glapi \

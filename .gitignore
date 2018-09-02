@@ -8,3 +8,8 @@ osdemo32
 osdemo32-mangled
 *.dSYM
 *.exe
+mesa-*.tar.gz
+mesa-*.tar.bz2
+mesa-*/
+!patches/mesa-*/
+*.DS_Store

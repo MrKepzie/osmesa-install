@@ -1,0 +1,38 @@
+--- mesa-18.1.0-rc4/src/gallium/drivers/swr/rasterizer/jitter/builder_mem.cpp.orig	2018-05-12 01:27:03.000000000 +0200
++++ mesa-18.1.0-rc4/src/gallium/drivers/swr/rasterizer/jitter/builder_mem.cpp	2018-05-14 14:55:58.000000000 +0200
+@@ -252,7 +252,7 @@
+             if (info.numComps > 2)
+             {
+                 // offset base to the next components(zw) in the vertex to gather
+-                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((intptr_t)4));
++                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((int64_t)4));
+ 
+                 vGatherResult[1] = GATHERPS(vGatherMaskedVal, pSrcBase, byteOffsets, vMask, 1, usage);
+                 // e.g. result of second 8x32bit integer gather for 16bit components
+@@ -285,7 +285,7 @@
+                 vGatherComponents[swizzleIndex] = GATHERPS(vGatherComponents[swizzleIndex], pSrcBase, byteOffsets, vMask, 1, usage);
+ 
+                 // offset base to the next component to gather
+-                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((intptr_t)4));
++                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((int64_t)4));
+             }
+         }
+         break;
+@@ -330,7 +330,7 @@
+             if (info.numComps > 2)
+             {
+                 // offset base to the next components(zw) in the vertex to gather
+-                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((intptr_t)4));
++                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((int64_t)4));
+ 
+                 vGatherResult[1] = GATHERDD(vGatherMaskedVal, pSrcBase, byteOffsets, vMask, 1, usage);
+                 // e.g. result of second 8x32bit integer gather for 16bit components
+@@ -364,7 +364,7 @@
+                 vGatherComponents[swizzleIndex] = GATHERDD(vGatherComponents[swizzleIndex], pSrcBase, byteOffsets, vMask, 1, usage);
+ 
+                 // offset base to the next component to gather
+-                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((intptr_t)4));
++                pSrcBase = OFFSET_TO_NEXT_COMPONENT(pSrcBase, C((int64_t)4));
+             }
+         }
+         break;
