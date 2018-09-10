@@ -307,7 +307,9 @@ if [ "$osmesadriver" = 3 ] || [ "$osmesadriver" = 4 ]; then
                     cmake_archflags="$cmake_archflags -DCMAKE_OSX_SYSROOT=$SDKROOT"
                 fi
             fi
-
+            if [ "osname" = "Linux" ]; then
+                cmake_archflags="$cmake_archflags -DLIBCXX_CXX_ABI=libstdc++"
+            fi
             case "$osname" in
                  Msys*|MSYS*|MINGW*)
                      cmakegen="MSYS Makefiles"
