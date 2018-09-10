@@ -39,7 +39,7 @@ mangled=1
 llvmprefix="${LLVM_PREFIX:-/opt/llvm}"
 # do we want to build the proper LLVM static libraries too? or are they already installed ?
 buildllvm="${LLVM_BUILD:-0}"
-llvmversion="${LLVM_VERSION:-4.0.1}"
+llvmversion="${LLVM_VERSION:-5.0.2}"
 # redirect output and error to log file; exit script on error.
 silentlogging="${SILENT_LOG:-0}"
 osname=$(uname)
@@ -222,7 +222,34 @@ if [ "$osmesadriver" = 3 ] || [ "$osmesadriver" = 4 ]; then
             # the llvm we server doesnt' allow continuing partial downloads
             curl $curlopts -O "http://www.llvm.org/releases/${llvmversion}/llvm-${llvmversion}.src.tar.$archsuffix"
         fi
+        if [ ! -f cfe-${llvmversion}.src.tar.xz ]; then
+            echo "* downloading Clang ${llvmversion}..."
+            curl $curlopts -O "http://releases.llvm.org/${llvmversion}/cfe-${llvmversion}.src.tar.xz"
+        fi
+        if [ ! -f compiler-rt-${llvmversion}.src.tar.xz ]; then
+            echo "* downloading compiler-rt ${llvmversion}..."
+            curl $curlopts -O "http://releases.llvm.org/${llvmversion}/compiler-rt-${llvmversion}.src.tar.xz"
+        fi
+        if [ ! -f libcxx-${llvmversion}.src.tar.xz ]; then
+            echo "* downloading libcxx ${llvmversion}..."
+            curl $curlopts -O "http://releases.llvm.org/${llvmversion}/libcxx-${llvmversion}.src.tar.xz"
+        fi
+        if [ ! -f clang-tools-extra-${llvmversion}.src.tar.xz ]; then
+            echo "* downloading clang-tools-extra ${llvmversion}..."
+            curl $curlopts -O "http://releases.llvm.org/${llvmversion}/clang-tools-extra-${llvmversion}.src.tar.xz"
+        fi
+
         $xzcat llvm-${llvmversion}.src.tar.$archsuffix | tar xf -
+        $xzcat cfe-${llvmversion}.src.tar.xz | tar xf -
+        $xzcat compiler-rt-${llvmversion}.src.tar.xz | tar xf -
+        $xzcat libcxx-${llvmversion}.src.tar.xz | tar xf -
+        $xzcat clang-tools-extra-${llvmversion}.src.tar.xz | tar xf -
+
+        mv cfe-${llvmversion}.src llvm-${llvmversion}.src/tools/clang
+        mv clang-tools-extra-${llvmversion}.src llvm-${llvmversion}.src/tools/clang/tools/clang-tools-extra
+        mv libcxx-${llvmversion}.src llvm-${llvmversion}.src/projects/libcxx
+        mv compiler-rt-${llvmversion}.src llvm-${llvmversion}.src/projects/compiler-rt
+
         cd llvm-${llvmversion}.src
         echo "* building LLVM..."
         cmake_archflags=

@@ -11,5 +11,6 @@ osdemo32-mangled
 mesa-*.tar.gz
 mesa-*.tar.bz2
 mesa-*/
+*-*.src*
 !patches/mesa-*/
 *.DS_Store
