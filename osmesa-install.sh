@@ -306,6 +306,7 @@ if [ "$osmesadriver" = 3 ] || [ "$osmesadriver" = 4 ]; then
                 if [ -n "${SDKROOT+x}" ]; then
                     cmake_archflags="$cmake_archflags -DCMAKE_OSX_SYSROOT=$SDKROOT"
                 fi
+                (cd projects/compiler-rt; patch -p0 < "$srcdir/patches/llvm-$llvmversion/fix_dispatch.diff")
             fi
             if [ "$osname" = "Linux" ]; then
                 cmake_archflags="$cmake_archflags -DLIBCXX_CXX_ABI=libstdc++"
